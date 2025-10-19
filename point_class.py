@@ -10,9 +10,17 @@ class Point:
     def odistance(self):
         import math 
         d = math.sqrt(self.x * self.x + self.y * self.y)
-
         return(d)
     
+    def __add__(self, other):
+        if isinstance(other, Point):
+            return Point(self.x + other.x, self.y + other.y)
+        else:
+            raise TypeError("add only works for Point type")
+    
+    def __str__(self):
+        return f"Point({self.x}, {self.y})"
+
 p = Point(3, 4)
 q = Point(7, 10)
 
