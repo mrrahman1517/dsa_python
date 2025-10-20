@@ -4,11 +4,23 @@ Timer Library - A comprehensive timing utility for measuring code execution time
 This module provides a Timer class with exception handling for measuring
 elapsed time of code execution with high precision.
 
-Author: DSA Python Project
+Key Features:
+- High-precision timing using time.perf_counter()
+- Context manager support for convenient usage
+- Exception handling for invalid operations
+- Utility functions for timing and comparing functions
+- Clean string representation for easy output
+
+Author: Muntasir Raihan Rahman, and AI
 Date: October 2025
+Version: 1.0.0
 """
 
 import time
+
+
+# Constants for better readability and maintainability
+DEFAULT_PRECISION = 6  # Number of decimal places for time display
 
 
 class TimerException(Exception):
@@ -42,9 +54,12 @@ class Timer:
         
         Sets both start time and elapsed time to None to indicate
         the timer has not been used yet.
+        
+        Note: The Timer starts in a "clean" state and requires start()
+        to be called before any timing can begin.
         """
-        self._start_time = None
-        self._elapsed_time = None
+        self._start_time = None      # Time when start() was called
+        self._elapsed_time = None    # Calculated time difference after stop()
     
     def start(self):
         """
@@ -61,6 +76,7 @@ class Timer:
         """
         if self._start_time is not None:
             raise TimerException("Timer is running, use stop() before starting again")
+        # Use perf_counter() for highest precision monotonic timing
         self._start_time = time.perf_counter()
 
     def stop(self):
@@ -81,8 +97,9 @@ class Timer:
         """
         if self._start_time is None:
             raise TimerException("Timer is not running, use start() first")
+        # Calculate elapsed time and reset start_time for next use
         self._elapsed_time = time.perf_counter() - self._start_time
-        self._start_time = None
+        self._start_time = None  # Reset to allow new timing cycle
 
     def elapsed(self):
         """
@@ -153,7 +170,8 @@ class Timer:
         """
         if self._elapsed_time is None:
             return "Timer has not run yet"
-        return f"{self._elapsed_time:.6f} seconds"
+        # Format with consistent precision for readability
+        return f"{self._elapsed_time:.{DEFAULT_PRECISION}f} seconds"
     
     def __repr__(self):
         """
@@ -185,10 +203,16 @@ class Timer:
         """
         Context manager exit - stop the timer.
         
+        This method is called automatically when exiting a 'with' block,
+        ensuring the timer is always properly stopped even if an exception occurs.
+        
         Args:
             exc_type: Exception type (if any)
             exc_val: Exception value (if any) 
             exc_tb: Exception traceback (if any)
+        
+        Returns:
+            None: Does not suppress exceptions (returns None/False)
         """
         self.stop()
 
@@ -198,6 +222,9 @@ class Timer:
 def time_function(func, *args, **kwargs):
     """
     Time the execution of a function call.
+    
+    This utility function provides a convenient way to measure the execution
+    time of any callable without manually managing Timer start/stop calls.
     
     Args:
         func: The function to time
@@ -214,7 +241,7 @@ def time_function(func, *args, **kwargs):
     """
     timer = Timer()
     timer.start()
-    result = func(*args, **kwargs)
+    result = func(*args, **kwargs)  # Execute the function with provided arguments
     timer.stop()
     return result, timer.elapsed()
 
@@ -223,6 +250,10 @@ def compare_functions(func1, func2, *args, **kwargs):
     """
     Compare the execution time of two functions with the same arguments.
     
+    This utility function runs both functions with identical arguments and
+    provides a comprehensive comparison of their performance including
+    which is faster and by how much.
+    
     Args:
         func1: First function to time
         func2: Second function to time
@@ -230,7 +261,13 @@ def compare_functions(func1, func2, *args, **kwargs):
         **kwargs: Keyword arguments to pass to both functions
     
     Returns:
-        dict: Dictionary containing results and timing information
+        dict: Dictionary containing results and timing information with keys:
+            - 'result1': Return value of func1
+            - 'result2': Return value of func2  
+            - 'time1': Execution time of func1 in seconds
+            - 'time2': Execution time of func2 in seconds
+            - 'faster': String indicating which function was faster ("func1" or "func2")
+            - 'speedup': Numeric factor showing how much faster the winner was
     
     Example:
         >>> def method1(n): return sum(range(n))
@@ -238,12 +275,15 @@ def compare_functions(func1, func2, *args, **kwargs):
         >>> comparison = compare_functions(method1, method2, 10000)
         >>> print(f"Method 1: {comparison['time1']:.6f}s")
         >>> print(f"Method 2: {comparison['time2']:.6f}s")
+        >>> print(f"Winner: {comparison['faster']} ({comparison['speedup']:.1f}x faster)")
     """
+    # Time both functions with identical arguments
     result1, time1 = time_function(func1, *args, **kwargs)
     result2, time2 = time_function(func2, *args, **kwargs)
     
+    # Determine which is faster and calculate speedup
     faster = "func1" if time1 < time2 else "func2"
-    speedup = max(time1, time2) / min(time1, time2)
+    speedup = max(time1, time2) / min(time1, time2) if min(time1, time2) > 0 else float('inf')
     
     return {
         'result1': result1,
