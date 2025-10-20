@@ -11,7 +11,7 @@ Key Features:
 - Utility functions for timing and comparing functions
 - Clean string representation for easy output
 
-Author: Muntasir Raihan Rahman, and AI
+Author: Muntasir Raihan Rahman
 Date: October 2025
 Version: 1.0.0
 """
